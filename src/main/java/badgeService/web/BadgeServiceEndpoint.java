@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -52,6 +53,7 @@ public class BadgeServiceEndpoint {
 
         for (Attendee attendee: attendees) {
             String uuid = attendee.getUuid();
+
             ticketCodeToAttendee.put(uuid, EventSecurity.encrypt(uuid, toJson(attendee)));
         }
 

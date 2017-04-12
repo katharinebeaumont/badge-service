@@ -37,7 +37,7 @@ public class Attendee {
     private String fullName;
     private String company;
     private String email;
-    private String status;
+    private String status = "ACQUIRED";
 
     //JPA requires a default constructor.
     public Attendee() {
@@ -47,9 +47,7 @@ public class Attendee {
         this.uuid = id;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.fullName = firstName + " " + lastName;
         this.email = email;
-        this.status = "PENDING";
     }
 
     @Override

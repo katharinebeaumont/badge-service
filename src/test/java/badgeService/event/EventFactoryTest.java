@@ -36,5 +36,4 @@ public class EventFactoryTest {
         assertEquals(17, devoxxUK.getApiVersion());
         assertEquals("Devoxx UK", devoxxUK.getName());
     }
-
 }
