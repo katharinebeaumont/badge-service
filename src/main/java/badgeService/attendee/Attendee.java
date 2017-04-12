@@ -54,7 +54,7 @@ public class Attendee {
 
     @Override
     public String toString() {
-        return this.fullName + ", " + this.uuid;
+        return this.getFullName() + ", " + this.uuid;
     }
 
     /**
