@@ -61,7 +61,7 @@ public class BadgeServiceEndpoint {
         return new ResponseEntity<>(attendeesJson,HttpStatus.OK);
     }
 
-    @RequestMapping("/resource")
+    @RequestMapping("/admin/api/events")
     public ResponseEntity getEventId() {
         Event devoxx = factory.factoryDevoxxUK();
         String devoxxJson = toJson(Arrays.asList(devoxx));
