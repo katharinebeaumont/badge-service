@@ -54,7 +54,7 @@ public class BadgeServiceEndpoint {
         for (Attendee attendee: attendees) {
             String uuid = attendee.getUuid();
 
-            ticketCodeToAttendee.put(uuid, EventSecurity.encrypt(uuid, toJson(attendee)));
+            ticketCodeToAttendee.put(uuid, EventSecurity.encrypt(uuid+"/"+uuid, toJson(attendee)));
         }
 
         String attendeesJson = toJson(ticketCodeToAttendee);
