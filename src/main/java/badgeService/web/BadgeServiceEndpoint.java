@@ -54,14 +54,14 @@ public class BadgeServiceEndpoint {
         for (Attendee attendee: attendees) {
             String uuid = attendee.getUuid();
 
-            ticketCodeToAttendee.put(uuid, EventSecurity.encrypt(uuid, toJson(attendee)));
+            ticketCodeToAttendee.put(uuid, EventSecurity.encrypt(uuid+"/"+uuid, toJson(attendee)));
         }
 
         String attendeesJson = toJson(ticketCodeToAttendee);
         return new ResponseEntity<>(attendeesJson,HttpStatus.OK);
     }
 
-    @RequestMapping("/resource")
+    @RequestMapping("/admin/api/events")
     public ResponseEntity getEventId() {
         Event devoxx = factory.factoryDevoxxUK();
         String devoxxJson = toJson(Arrays.asList(devoxx));

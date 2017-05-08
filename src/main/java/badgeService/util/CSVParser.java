@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class CSVParser<E> {
 
         try {
             resourceInputStream = resource.getInputStream();
-            br = new BufferedReader((new InputStreamReader(resourceInputStream)));
+            br = new BufferedReader((new InputStreamReader(resourceInputStream, Charset.forName("UTF-8"))));
 
             mapper = new CSVAttendeeMapper<E>(entityMapping, br.readLine());
 
