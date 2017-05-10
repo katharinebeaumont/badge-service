@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <title>Title</title>
+</head>
+<body>
+<div class="container">
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>email</th>
+                    <th>Company</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+</div>
+<div class="modal fade" tabindex="-1" role="dialog" id="modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h2 class="modal-title text-center" id="modal-full-name"></h2>
+            </div>
+            <div class="modal-body">
+                <img src="" id="modal-qrcode" class="center-block">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $.getJSON('/attendees/all', function(list) {
+            var table = $('#table-body');
+            list.forEach(function(attendee) {
+                var html = '<tr><td class="name">'+attendee.firstName+'</td><td class="name">'+attendee.lastName+'</td><td>'+attendee.email+'</td><td>'+attendee.company+'</td><td><button class="btn btn-primary btn-sm" onclick="openQR(\''+attendee.uuid+'\', this); return false;">code</button></td></tr>';
+                $(html).appendTo(table);
+            });
+        });
+    });
+
+    function openQR(id, target) {
+        var arr = [];
+        var name = $(target).parents('tr').find('.name').each(function(a, b) {
+            arr.push(b.textContent);
+        });
+
+        $('#modal-full-name').html(arr.join(' '));
+        $('#modal-qrcode').attr('src', '/attendees/'+id+'/qr-code');
+        $('#modal').modal('show');
+    }
+</script>
+</body>
+</html>
