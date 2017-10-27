@@ -1,7 +1,7 @@
 package badgeService.event;
 
-import javafx.util.Pair;
 import org.apache.tomcat.util.codec.binary.Base64;
+import org.springframework.data.util.Pair;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -43,13 +43,13 @@ public class EventSecurity {
             return null;
         }
         SecretKeySpec secret = new SecretKeySpec(secretKey.getEncoded(), "AES");
-        return new Pair<Cipher, SecretKeySpec>(cipher, secret);
+        return Pair.of(cipher, secret);
     }
 
     public static String encrypt(String key, String payload) {
-        Pair cipherAndSecret = getCipherAndSecret(key);
-        Cipher cipher = (Cipher)cipherAndSecret.getKey();
-        SecretKeySpec secret = (SecretKeySpec)cipherAndSecret.getValue();
+        Pair<Cipher, SecretKeySpec> cipherAndSecret = getCipherAndSecret(key);
+        Cipher cipher = cipherAndSecret.getFirst();
+        SecretKeySpec secret = cipherAndSecret.getSecond();
 
         try {
             cipher.init(Cipher.ENCRYPT_MODE, secret);
@@ -64,9 +64,9 @@ public class EventSecurity {
 
     public static String decrypt(String key, String payload) {
         try {
-            Pair cipherAndSecret = getCipherAndSecret(key);
-            Cipher cipher = (Cipher)cipherAndSecret.getKey();
-            SecretKeySpec secret = (SecretKeySpec)cipherAndSecret.getValue();
+            Pair<Cipher, SecretKeySpec> cipherAndSecret = getCipherAndSecret(key);
+            Cipher cipher = cipherAndSecret.getFirst();
+            SecretKeySpec secret = cipherAndSecret.getSecond();
 
             int index = payload.indexOf("|");
             String ivC = payload.substring(0,index);

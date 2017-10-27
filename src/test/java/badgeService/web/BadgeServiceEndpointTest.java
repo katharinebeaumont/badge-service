@@ -77,7 +77,7 @@ public class BadgeServiceEndpointTest {
 
     @Test
     public void getEvents() throws Exception {
-        mvc.perform(MockMvcRequestBuilders.get("/resource").accept(MediaType.APPLICATION_JSON))
+        mvc.perform(MockMvcRequestBuilders.get("/admin/api/events").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(equalTo(eventData)));
     }
