@@ -13,18 +13,23 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 /**
  * Created by katharinevoxxed on 03/02/2017.
@@ -35,11 +40,70 @@ public class BadgeServiceEndpoint {
     private final AttendeeRepository attendeeRepository;
     private EventFactory factory;
 
+    private static final String ALFIO_TIMESTAMP_HEADER = "Alfio-TIME";
+
     @Autowired
     public BadgeServiceEndpoint(AttendeeRepository attendeeRepository, EventFactory factory) {
         this.attendeeRepository = attendeeRepository;
         this.factory = factory;
     }
+
+
+    /* core api */
+    @RequestMapping("/admin/api/events")
+    public ResponseEntity getEventId() {
+        Event devoxx = factory.factoryDevoxxUK();
+        String devoxxJson = toJson(Arrays.asList(devoxx));
+        return new ResponseEntity<>(devoxxJson,HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/admin/api/check-in/{eventName}/offline-identifiers", method = GET)
+    public List<Integer> getOfflineIdentifiers(@PathVariable("eventName") String eventName,
+                                               @RequestParam(value = "changedSince", required = false) Long changedSince,
+                                               HttpServletResponse resp) {
+        Date since = changedSince == null ? new Date(0) : DateUtils.addSeconds(new Date(changedSince), -1);
+
+        //FIXME add since support for delta loading
+        List<Integer> ids = attendeeRepository.findIds(since);
+
+        resp.setHeader(ALFIO_TIMESTAMP_HEADER, Long.toString(new Date().getTime()));
+        return ids;
+    }
+
+    @RequestMapping(value = "/admin/api/check-in/{eventName}/offline", method = POST)
+    public Map<String, String> getOfflineEncryptedInfo(@PathVariable("eventName") String eventName, @RequestBody List<Integer> ids) {
+
+        List<Attendee> foundAttendee = attendeeRepository.findAllWithIds(ids);
+
+        return encryptAttendees(foundAttendee);
+    }
+
+    private Map<String, String> encryptAttendees(List<Attendee> foundAttendee) {
+        Function<Attendee, String> keyExtractor = ticket -> DigestUtils.sha256Hex(ticket.getUuid());
+
+        Function<Attendee, String> encryptedBody = ticket -> {
+            Map<String, String> info = new HashMap<>();
+            info.put("firstName", ticket.getFirstName());
+            info.put("lastName", ticket.getLastName());
+            info.put("fullName", ticket.getFullName());
+            info.put("email", ticket.getEmail());
+            info.put("status", ticket.getStatus().toString());
+            info.put("uuid", ticket.getUuid());
+            info.put("category", ticket.getTicketCategory());
+            //
+            String uuid = ticket.getUuid();
+
+            return EventSecurity.encrypt(uuid+"/"+uuid, toJson(info));
+        };
+        return foundAttendee
+                .stream()
+                .collect(Collectors.toMap(keyExtractor, encryptedBody));
+    }
+
+    /** **/
+
+
+    /** non core api **/
 
     @RequestMapping("/attendee")
     public ResponseEntity getAttendee(@RequestParam(value="uuid") String id) {
@@ -49,32 +113,15 @@ public class BadgeServiceEndpoint {
         return new ResponseEntity<>(toJson(attendee),HttpStatus.OK);
     }
 
-
-    @RequestMapping("/offline")
-    public ResponseEntity getAllAttendees() {
-        List<Attendee> attendees = attendeeRepository.findAll();
-        HashMap ticketCodeToAttendee = new HashMap<String, Attendee>();
-
-        for (Attendee attendee: attendees) {
-            String uuid = attendee.getUuid();
-
-            ticketCodeToAttendee.put(uuid, EventSecurity.encrypt(uuid+"/"+uuid, toJson(attendee)));
-        }
-
-        String attendeesJson = toJson(ticketCodeToAttendee);
-        return new ResponseEntity<>(attendeesJson,HttpStatus.OK);
-    }
-
-    @RequestMapping("/admin/api/events")
-    public ResponseEntity getEventId() {
-        Event devoxx = factory.factoryDevoxxUK();
-        String devoxxJson = toJson(Arrays.asList(devoxx));
-        return new ResponseEntity<>(devoxxJson,HttpStatus.OK);
-    }
-
     @RequestMapping("/attendees/all")
     public ResponseEntity<List<Attendee>> getAllAttendeesJSON() {
         return ResponseEntity.ok(attendeeRepository.findAll());
+    }
+
+    @RequestMapping("/offline")
+    public Map<String, String> getAllAttendees() {
+        List<Attendee> attendees = attendeeRepository.findAll();
+        return encryptAttendees(attendees);
     }
 
     @RequestMapping("/attendees/{id}/qr-code")

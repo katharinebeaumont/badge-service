@@ -15,7 +15,6 @@ public class Event {
     private String location;
     private int apiVersion;
 
-
     public String getKey() {
         return key;
     }
@@ -87,5 +86,4 @@ public class Event {
     public void setExternal(boolean external) {
         this.external = external;
     }
-
 }
