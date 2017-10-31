@@ -51,7 +51,15 @@ public class AttendeeDataInjector implements CommandLineRunner {
         h.set(headerName, headerValue);
 
         ResponseEntity<List<RemoteAttendee>> res = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity(h), new ParameterizedTypeReference<List<RemoteAttendee>>() {});
-        List<Attendee> attendees = res.getBody().stream().map(remoteAttendee -> new Attendee(remoteAttendee.getRegistrationCode(), remoteAttendee.getFirstName(), remoteAttendee.getLastName(), remoteAttendee.getEmail())).collect(Collectors.toList());
+        List<Attendee> attendees = res.getBody().stream().map(remoteAttendee -> {
+                Attendee a = new Attendee(remoteAttendee.getEmail()+"|"+remoteAttendee.getRegistrationCode(),
+                        remoteAttendee.getFirstName(),
+                        remoteAttendee.getLastName(),
+                        remoteAttendee.getEmail());
+                a.setCompany(remoteAttendee.getCompany());
+                a.setTicketCategory(remoteAttendee.getPass());
+                return a;
+        }).collect(Collectors.toList());
         attendeeRepository.save(attendees);
         Stream.of((attendeeRepository.findAll())).forEach(attendee -> System.out.print(attendee.toString()));
     }

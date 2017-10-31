@@ -63,7 +63,7 @@ public class BadgeServiceEndpoint {
                                                HttpServletResponse resp) {
         Date since = changedSince == null ? new Date(0) : DateUtils.addSeconds(new Date(changedSince), -1);
 
-        //FIXME add since support for delta loading
+        //TODO add 'since' support for delta loading
         List<Integer> ids = attendeeRepository.findIds(since);
 
         resp.setHeader(ALFIO_TIMESTAMP_HEADER, Long.toString(new Date().getTime()));
@@ -99,6 +99,8 @@ public class BadgeServiceEndpoint {
                 .stream()
                 .collect(Collectors.toMap(keyExtractor, encryptedBody));
     }
+
+    //TODO implement POST /admin/api/check-in/event/$eventKey/ticket/$uuid?offlineUser=$username
 
     /** **/
 
