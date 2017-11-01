@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-import java.util.Date;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -23,6 +23,9 @@ public interface AttendeeRepository extends JpaRepository<Attendee, Integer> {
 
     @Query("select a from Attendee a where a.id in (:ids)")
     List<Attendee> findAllWithIds(@Param("ids") List<Integer> ids);
+
+    @Query("select a.uuid from Attendee a where a.uuid in (:uuids)")
+    List<String> findAllMatchingUuids(@Param("uuids") Collection<String> uuids);
 
     @Query("select a from Attendee a where a.uuid = :uuid")
     Attendee findOne(@Param("uuid") String uuid);
