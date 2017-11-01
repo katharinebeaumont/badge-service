@@ -14,7 +14,6 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,12 +60,12 @@ public class BadgeServiceEndpoint {
     public List<Integer> getOfflineIdentifiers(@PathVariable("eventName") String eventName,
                                                @RequestParam(value = "changedSince", required = false) Long changedSince,
                                                HttpServletResponse resp) {
-        Date since = changedSince == null ? new Date(0) : DateUtils.addSeconds(new Date(changedSince), -1);
+        long since = changedSince == null ? 0 : changedSince;
 
-        //TODO add 'since' support for delta loading
+        Long nextChangedSince = attendeeRepository.findNextChangedSince(since);
         List<Integer> ids = attendeeRepository.findIds(since);
 
-        resp.setHeader(ALFIO_TIMESTAMP_HEADER, Long.toString(new Date().getTime()));
+        resp.setHeader(ALFIO_TIMESTAMP_HEADER, Long.toString(nextChangedSince));
         return ids;
     }
 
@@ -100,7 +99,69 @@ public class BadgeServiceEndpoint {
                 .collect(Collectors.toMap(keyExtractor, encryptedBody));
     }
 
-    //TODO implement POST /admin/api/check-in/event/$eventKey/ticket/$uuid?offlineUser=$username
+    @RequestMapping(value = "/admin/api/check-in/event/{eventName}/ticket/{ticketIdentifier:.*}", method = POST)
+    public TicketAndCheckInResult checkIn(@PathVariable("eventName") String eventName,
+                                          @PathVariable("ticketIdentifier") String ticketIdentifier,
+                                          @RequestBody TicketCode ticketCode,
+                                          @RequestParam(value = "offlineUser", required = false) String offlineUser) {
+        return new TicketAndCheckInResult(new Ticket(), new DefaultCheckInResult(CheckInStatus.SUCCESS, ""));
+    }
+
+    public static class TicketCode {
+        private String code;
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(String code) {
+            this.code = code;
+        }
+    }
+
+    public static class Ticket {
+    }
+
+    public static class TicketAndCheckInResult {
+        private final Ticket ticket;
+        private final CheckInResult result;
+
+        public TicketAndCheckInResult(Ticket ticket, CheckInResult checkInResult) {
+            this.ticket = ticket;
+            this.result = checkInResult;
+        }
+
+        public Ticket getTicket() {
+            return ticket;
+        }
+
+        public CheckInResult getResult() {
+            return result;
+        }
+
+    }
+
+    public interface CheckInResult {
+        CheckInStatus getStatus();
+    }
+
+    public enum CheckInStatus {
+        EVENT_NOT_FOUND, TICKET_NOT_FOUND, EMPTY_TICKET_CODE, INVALID_TICKET_CODE, INVALID_TICKET_STATE, ALREADY_CHECK_IN, MUST_PAY, OK_READY_TO_BE_CHECKED_IN, SUCCESS, INVALID_TICKET_CATEGORY_CHECK_IN_DATE
+    }
+
+    public static class DefaultCheckInResult implements CheckInResult {
+        private final CheckInStatus status;
+        private final String message;
+
+        public DefaultCheckInResult(CheckInStatus status, String message) {
+            this.status = status;
+            this.message = message;
+        }
+
+        public CheckInStatus getStatus() {
+            return status;
+        }
+    }
 
     /** **/
 

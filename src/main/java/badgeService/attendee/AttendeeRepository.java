@@ -15,8 +15,11 @@ import java.util.List;
 public interface AttendeeRepository extends JpaRepository<Attendee, Integer> {
 
 
-    @Query("select id from Attendee a where a.changedSince >= :changedSince")
-    List<Integer> findIds(@Param("changedSince") Date date);
+    @Query("select coalesce(max(a.changedSince), 0) from Attendee a where a.changedSince > :changedSince")
+    Long findNextChangedSince(@Param("changedSince") long date);
+
+    @Query("select a.id from Attendee a where a.changedSince > :changedSince")
+    List<Integer> findIds(@Param("changedSince") long date);
 
     @Query("select a from Attendee a where a.id in (:ids)")
     List<Attendee> findAllWithIds(@Param("ids") List<Integer> ids);

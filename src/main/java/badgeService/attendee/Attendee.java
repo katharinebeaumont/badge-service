@@ -6,8 +6,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
-import java.util.Date;
-
 
 /*
 
@@ -48,8 +46,8 @@ public class Attendee {
     private String status = "ACQUIRED";
     private String ticketCategory = "default";
 
-    @Column(name = "changed_since", columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP", insertable = false, updatable = false)
-    private Date changedSince;
+    @Column(name = "changed_since", columnDefinition="number DEFAULT 0")
+    private long changedSince;
 
     //JPA requires a default constructor.
     public Attendee() {
@@ -147,11 +145,11 @@ public class Attendee {
         this.ticketCategory = ticketCategory;
     }
 
-    public Date getChangedSince() {
+    public long getChangedSince() {
         return changedSince;
     }
 
-    public void setChangedSince(Date changedSince) {
+    public void setChangedSince(long changedSince) {
         this.changedSince = changedSince;
     }
 }

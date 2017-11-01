@@ -58,6 +58,7 @@ public class AttendeeDataInjector implements CommandLineRunner {
                         remoteAttendee.getEmail());
                 a.setCompany(remoteAttendee.getCompany());
                 a.setTicketCategory(remoteAttendee.getPass());
+                a.setChangedSince(remoteAttendee.getTimestamp());
                 return a;
         }).collect(Collectors.toList());
         attendeeRepository.save(attendees);
