@@ -92,6 +92,13 @@ public class BadgeServiceEndpoint {
         return ids;
     }
 
+    @RequestMapping(value = "/admin/api/check-in/{eventName}/label-layout", method = GET)
+    public void getLabelLayout(HttpServletResponse res) throws IOException {
+        String s = "{\"qrCode\":{\"additionalInfo\":[\"company\"],\"infoSeparator\":\"::\"},\"content\":{\"thirdRow\":[\"company\"]},\"general\":{\"printPartialID\":false}}";
+        res.setContentType("application/json");
+        res.getWriter().write(s);
+    }
+
     @RequestMapping(value = "/admin/api/check-in/{eventName}/offline", method = POST)
     public Map<String, String> getOfflineEncryptedInfo(@PathVariable("eventName") String eventName, @RequestBody List<Integer> ids) {
 
@@ -112,6 +119,9 @@ public class BadgeServiceEndpoint {
             info.put("status", ticket.getStatus().toString());
             info.put("uuid", ticket.getUuid());
             info.put("category", ticket.getTicketCategory());
+            if(ticket.getCompany() != null) {
+                info.put("additionalInfoJson", new Gson().toJson(Collections.singletonMap("company", ticket.getCompany())));
+            }
             //
             if(categoriesWithCheckInDate.contains(ticket.getTicketCategory())) {
                 String prefixKey = "attendee.checkInDate."+ticket.getTicketCategory();
