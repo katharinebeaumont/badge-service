@@ -15,6 +15,9 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.EnumerablePropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,10 +25,12 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -37,14 +42,32 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 public class BadgeServiceEndpoint {
 
     private final AttendeeRepository attendeeRepository;
-    private EventFactory factory;
+    private final EventFactory factory;
+
+    private final ConfigurableEnvironment environment;
+    private final Set<String> categoriesWithCheckInDate;
 
     private static final String ALFIO_TIMESTAMP_HEADER = "Alfio-TIME";
 
     @Autowired
-    public BadgeServiceEndpoint(AttendeeRepository attendeeRepository, EventFactory factory) {
+    public BadgeServiceEndpoint(AttendeeRepository attendeeRepository, EventFactory factory, ConfigurableEnvironment environment) {
         this.attendeeRepository = attendeeRepository;
         this.factory = factory;
+        this.environment = environment;
+
+        //
+        categoriesWithCheckInDate = StreamSupport.stream(environment.getPropertySources().spliterator(), false)
+                .filter(ps -> ps instanceof EnumerablePropertySource)
+                .map(ps -> ((EnumerablePropertySource) ps).getPropertyNames())
+                .flatMap(Arrays::<String>stream)
+                .filter(s -> s.startsWith("attendee.checkInDate"))
+                .map(s -> {
+                    String a = s.replace("attendee.checkInDate.", "");
+                    return a.substring(0, Math.max(a.indexOf(".to"), a.indexOf(".from")));
+                })
+                .collect(Collectors.toSet());
+        //
+
     }
 
 
@@ -90,6 +113,11 @@ public class BadgeServiceEndpoint {
             info.put("uuid", ticket.getUuid());
             info.put("category", ticket.getTicketCategory());
             //
+            if(categoriesWithCheckInDate.contains(ticket.getTicketCategory())) {
+                String prefixKey = "attendee.checkInDate."+ticket.getTicketCategory();
+                info.put("validCheckInFrom", Long.toString(OffsetDateTime.parse(environment.getProperty(prefixKey + ".from")).toEpochSecond()));
+                info.put("validCheckInTo", Long.toString(OffsetDateTime.parse(environment.getProperty(prefixKey + ".to")).toEpochSecond()));
+            }
             String uuid = ticket.getUuid();
 
             return EventSecurity.encrypt(uuid+"/"+uuid, toJson(info));
