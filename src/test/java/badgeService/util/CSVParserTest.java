@@ -21,7 +21,7 @@ public class CSVParserTest {
         CSVParser parser = new CSVParser("test-report.csv", mapping);
 
         //Act
-        List<Attendee> attendees = parser.parseEntitesFromCSV();
+        List<Attendee> attendees = parser.parseEntitiesFromCSV();
 
         //Assert
         for (Attendee att : attendees) {

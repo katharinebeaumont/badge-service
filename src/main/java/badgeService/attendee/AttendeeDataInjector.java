@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class AttendeeDataInjector implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... strings) throws Exception {
+    public void run(String... strings) {
         String source = environment.getProperty("attendee.datasource");
         if("csv".equals(source)) {
             generateAndSaveAttendees();
@@ -73,7 +74,7 @@ public class AttendeeDataInjector implements CommandLineRunner {
         }).collect(Collectors.toList());
 
         List<String> uuid = attendees.stream().map(Attendee::getUuid).collect(Collectors.toList());
-        Set<String> alreadyPresentUuid = attendeeRepository.findAllMatchingUuids(uuid).stream().collect(Collectors.toSet());
+        Set<String> alreadyPresentUuid = new HashSet<>(attendeeRepository.findAllMatchingUuids(uuid));
         List<Attendee> newAttendees = attendees.stream().filter(a -> !alreadyPresentUuid.contains(a.getUuid())).collect(Collectors.toList());
         attendeeRepository.save(newAttendees);
 
@@ -87,11 +88,11 @@ public class AttendeeDataInjector implements CommandLineRunner {
         }
     }
 
-    public void generateAndSaveAttendees() {
-        CSVParser<Attendee> csvParser = new CSVParser(properties.getPath(), properties.getAttendeeTitleMapping());
-        List<Attendee> attendees = csvParser.parseEntitesFromCSV();
+    private void generateAndSaveAttendees() {
+        CSVParser csvParser = new CSVParser(properties.getPath(), properties.getAttendeeTitleMapping());
+        List<Attendee> attendees = csvParser.parseEntitiesFromCSV();
         attendeeRepository.save(attendees);
-        Stream.of((attendeeRepository.findAll())).forEach(attendee -> System.out.print(attendee.toString()));
+        attendeeRepository.findAll().forEach(attendee -> System.out.println(attendee.toString()));
     }
 
 }

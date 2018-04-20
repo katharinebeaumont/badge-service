@@ -75,7 +75,7 @@ public class BadgeServiceEndpoint {
     @RequestMapping("/admin/api/events")
     public ResponseEntity getEventId() {
         Event devoxx = factory.factoryDevoxxUK();
-        String devoxxJson = toJson(Arrays.asList(devoxx));
+        String devoxxJson = toJson(Collections.singletonList(devoxx));
         return new ResponseEntity<>(devoxxJson,HttpStatus.OK);
     }
 
@@ -116,15 +116,16 @@ public class BadgeServiceEndpoint {
             info.put("lastName", ticket.getLastName());
             info.put("fullName", ticket.getFullName());
             info.put("email", ticket.getEmail());
-            info.put("status", ticket.getStatus().toString());
+            info.put("status", ticket.getStatus());
             info.put("uuid", ticket.getUuid());
             info.put("category", ticket.getTicketCategory());
             if(ticket.getCompany() != null) {
                 info.put("additionalInfoJson", new Gson().toJson(Collections.singletonMap("company", ticket.getCompany())));
             }
             //
-            if(categoriesWithCheckInDate.contains(ticket.getTicketCategory())) {
-                String prefixKey = "attendee.checkInDate."+ticket.getTicketCategory();
+            String categoryKey = getCategoryKey(ticket.getTicketCategory());
+            if(categoriesWithCheckInDate.contains(categoryKey)) {
+                String prefixKey = "attendee.checkInDate."+categoryKey;
                 info.put("validCheckInFrom", Long.toString(OffsetDateTime.parse(environment.getProperty(prefixKey + ".from")).toEpochSecond()));
                 info.put("validCheckInTo", Long.toString(OffsetDateTime.parse(environment.getProperty(prefixKey + ".to")).toEpochSecond()));
             }
@@ -135,6 +136,10 @@ public class BadgeServiceEndpoint {
         return foundAttendee
                 .stream()
                 .collect(Collectors.toMap(keyExtractor, encryptedBody));
+    }
+
+    private static String getCategoryKey(String category) {
+        return category.replaceAll("\\s", "").toLowerCase();
     }
 
     @RequestMapping(value = "/admin/api/check-in/event/{eventName}/ticket/{ticketIdentifier:.*}", method = POST)

@@ -26,6 +26,7 @@ nbdist/
 .mvn/
 mvnw.cmd
 src/main/resources/event-report-test.csv
+src/main/resources/event-report-devoxx-uk.csv
 src/.DS_Store
 src/main/.DS_Store
 src/test/.DS_Store

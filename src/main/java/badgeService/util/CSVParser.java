@@ -1,12 +1,11 @@
 package badgeService.util;
 
+import badgeService.attendee.Attendee;
+import com.opencsv.CSVReader;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.List;
 /**
  * Created by katharinevoxxed on 09/02/2017.
  */
-public class CSVParser<E> {
+public class CSVParser {
 
     private String csvPath;
     private String entityMapping;
@@ -24,37 +23,28 @@ public class CSVParser<E> {
         this.entityMapping = entityMapping;
     }
 
-    private CSVAttendeeMapper mapper;
-
-    public List<E> parseEntitesFromCSV() {
-        List<E> entities = new ArrayList<E>();
-        BufferedReader br = null;
+    public List<Attendee> parseEntitiesFromCSV() {
+        List<Attendee> entities = new ArrayList<>();
         Resource resource = new ClassPathResource(csvPath);
-        InputStream resourceInputStream = null;
+        long changedSince = System.currentTimeMillis();
 
-        try {
-            resourceInputStream = resource.getInputStream();
-            br = new BufferedReader((new InputStreamReader(resourceInputStream, Charset.forName("UTF-8"))));
+        try (Reader isReader = new InputStreamReader(resource.getInputStream()); CSVReader reader = new CSVReader(isReader)){
 
-            mapper = new CSVAttendeeMapper<E>(entityMapping, br.readLine());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        try (BufferedReader br = new BufferedReader((new InputStreamReader(resource.getInputStream(), Charset.forName("UTF-8"))))){
+            CSVAttendeeMapper mapper = new CSVAttendeeMapper(entityMapping, br.readLine());
             String line;
             while ((line = br.readLine()) != null) {
                 System.out.println(line);
-
-                E entity = (E)mapper.getEntity(line);
+                Attendee entity = mapper.getEntity(line);
+                entity.setChangedSince(changedSince);
                 entities.add(entity);
             }
-
-
         } catch (IOException io) {
             io.printStackTrace();
-        } finally {
-            try {
-                br.close();
-            } catch (Exception ne) {
-                ne.printStackTrace();
-            }
         }
         return entities;
     }
