@@ -94,7 +94,7 @@ public class BadgeServiceEndpoint {
 
     @RequestMapping(value = "/admin/api/check-in/{eventName}/label-layout", method = GET)
     public void getLabelLayout(HttpServletResponse res) throws IOException {
-        String s = "{\"qrCode\":{\"additionalInfo\":[\"company\"],\"infoSeparator\":\"::\"},\"content\":{\"thirdRow\":[\"company\"]},\"general\":{\"printPartialID\":false}}";
+        String s = "{\"qrCode\":{\"additionalInfo\":[\"company\"],\"infoSeparator\":\"::\"},\"content\":{\"thirdRow\":[\"company\"]},\"general\":{\"printPartialID\":true}}";
         res.setContentType("application/json");
         res.getWriter().write(s);
     }
