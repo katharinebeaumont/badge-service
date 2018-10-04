@@ -17,7 +17,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.Principal;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -142,12 +142,26 @@ public class BadgeServiceEndpoint {
         return category.replaceAll("\\s", "").toLowerCase();
     }
 
+    //check-in methods are no-op. If you want to have the full statistics, please consider using https://alf.io
+
     @RequestMapping(value = "/admin/api/check-in/event/{eventName}/ticket/{ticketIdentifier:.*}", method = POST)
     public TicketAndCheckInResult checkIn(@PathVariable("eventName") String eventName,
                                           @PathVariable("ticketIdentifier") String ticketIdentifier,
                                           @RequestBody TicketCode ticketCode,
                                           @RequestParam(value = "offlineUser", required = false) String offlineUser) {
         return new TicketAndCheckInResult(new Ticket(), new DefaultCheckInResult(CheckInStatus.SUCCESS, ""));
+    }
+
+    @PostMapping("/check-in/event/{eventName}/bulk")
+    public Map<String, TicketAndCheckInResult> bulkCheckIn(@PathVariable("eventName") String eventName,
+                                                           @RequestBody List<TicketIdentifierCode> ticketIdentifierCodes,
+                                                           @RequestParam(value = "offlineUser", required = false) String offlineUser,
+                                                           @RequestParam(value = "forceCheckInPaymentOnSite", required = false, defaultValue = "false") boolean forceCheckInPaymentOnSite,
+                                                           Principal principal) {
+        return ticketIdentifierCodes
+                .stream()
+                .collect(Collectors.toMap(TicketIdentifierCode::getIdentifier, c -> new TicketAndCheckInResult(new Ticket(), new DefaultCheckInResult(CheckInStatus.SUCCESS, ""))));
+
     }
 
     public static class TicketCode {
@@ -258,6 +272,27 @@ public class BadgeServiceEndpoint {
         } catch (WriterException | IOException e) {
             e.printStackTrace();
             return Optional.empty();
+        }
+    }
+
+    public static class TicketIdentifierCode {
+        private String identifier;
+        private String code;
+
+        public String getIdentifier() {
+            return identifier;
+        }
+
+        public void setIdentifier(String identifier) {
+            this.identifier = identifier;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(String code) {
+            this.code = code;
         }
     }
 }
