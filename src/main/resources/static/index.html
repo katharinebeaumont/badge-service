@@ -15,6 +15,7 @@
                     <th>Last Name</th>
                     <th>email</th>
                     <th>Company</th>
+                    <th>Ticket Type</th>
                     <th>&nbsp;</th>
                 </tr>
             </thead>
@@ -45,7 +46,7 @@
         $.getJSON('/attendees/all', function(list) {
             var table = $('#table-body');
             list.forEach(function(attendee) {
-                var html = '<tr><td class="name">'+attendee.firstName+'</td><td class="name">'+attendee.lastName+'</td><td>'+attendee.email+'</td><td>'+attendee.company+'</td><td><button class="btn btn-primary btn-sm" onclick="openQR(\''+attendee.uuid+'\', this); return false;">code</button></td></tr>';
+                var html = '<tr><td class="name">'+attendee.firstName+'</td><td class="name">'+attendee.lastName+'</td><td>'+attendee.email+'</td><td>'+attendee.company+'</td><td>'+attendee.ticketCategory+'</td><td><button class="btn btn-primary btn-sm" onclick="openQR(\''+attendee.uuid+'\', this); return false;">code</button></td></tr>';
                 $(html).appendTo(table);
             });
         });

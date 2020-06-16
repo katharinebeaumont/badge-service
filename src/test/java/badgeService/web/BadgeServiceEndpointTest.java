@@ -19,6 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.UUID;
+
 import com.google.gson.Gson;
 
 /**
@@ -38,27 +41,27 @@ public class BadgeServiceEndpointTest {
     @Autowired
     private EventFactory factory;
 
-    private Attendee testAttendee;
-    private Attendee testAttendee2;
     private String testAtendeeJson;
     private String eventData;
+    private String uuid1;
 
     @Before
     public void setup() {
-        testAttendee = new Attendee("3423", "Katharine", "Beaumont", "k@k.com");
-        testAttendee2 = new Attendee("3473", "Freddy", "Young", "f@y.com");
+        uuid1 = UUID.randomUUID().toString();
+        Attendee testAttendee = new Attendee(uuid1, "Katharine", "Beaumont", "k@k.com");
+        Attendee testAttendee2 = new Attendee(UUID.randomUUID().toString(), "Freddy", "Young", "f@y.com");
         attendeeRepository.save(Arrays.asList(testAttendee, testAttendee2));
 
         Gson gson = new Gson();
         testAtendeeJson = gson.toJson(testAttendee);
 
-        eventData = gson.toJson(Arrays.asList(factory.factoryDevoxxUK()));
+        eventData = gson.toJson(Collections.singletonList(factory.factoryDevoxxUK()));
     }
 
     @Test
     public void getAttendee() throws Exception {
 
-        mvc.perform(MockMvcRequestBuilders.get( "/attendee?uuid=3423").accept(MediaType.APPLICATION_JSON))
+        mvc.perform(MockMvcRequestBuilders.get( "/attendee?uuid="+uuid1).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(equalTo(testAtendeeJson)));
     }
@@ -77,7 +80,7 @@ public class BadgeServiceEndpointTest {
 
     @Test
     public void getEvents() throws Exception {
-        mvc.perform(MockMvcRequestBuilders.get("/resource").accept(MediaType.APPLICATION_JSON))
+        mvc.perform(MockMvcRequestBuilders.get("/admin/api/events").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(equalTo(eventData)));
     }

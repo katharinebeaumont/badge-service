@@ -1,7 +1,9 @@
 package badgeService.attendee;
 
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 
@@ -29,6 +31,10 @@ Required structure:
 public class Attendee {
 
     @Id
+    @GeneratedValue
+    private Integer id;
+
+    @Column(unique = true)
     private String uuid;
     //Details for QR
 
@@ -38,13 +44,17 @@ public class Attendee {
     private String company;
     private String email;
     private String status = "ACQUIRED";
+    private String ticketCategory = "default";
+
+    @Column(name = "changed_since", columnDefinition="number DEFAULT 0")
+    private long changedSince;
 
     //JPA requires a default constructor.
     public Attendee() {
     }
 
-    public Attendee(String id, String firstName, String lastName, String email) {
-        this.uuid = id;
+    public Attendee(String uuid, String firstName, String lastName, String email) {
+        this.uuid = uuid;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -58,12 +68,21 @@ public class Attendee {
     /**
      * Getters and setters
      */
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
     public String getUuid() {
         return uuid;
     }
 
-    public void setUuid(String id) {
-        this.uuid = id;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getFirstName() {
@@ -118,4 +137,19 @@ public class Attendee {
         this.status = status;
     }
 
+    public String getTicketCategory() {
+        return ticketCategory;
+    }
+
+    public void setTicketCategory(String ticketCategory) {
+        this.ticketCategory = ticketCategory;
+    }
+
+    public long getChangedSince() {
+        return changedSince;
+    }
+
+    public void setChangedSince(long changedSince) {
+        this.changedSince = changedSince;
+    }
 }
